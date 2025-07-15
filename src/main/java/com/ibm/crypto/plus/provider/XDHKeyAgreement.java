@@ -73,8 +73,14 @@ abstract class XDHKeyAgreement extends KeyAgreementSpi {
     @Override
     protected Key engineDoPhase(Key key, boolean lastPhase)
             throws InvalidKeyException, IllegalStateException {
-        if (!(key instanceof XDHPublicKeyImpl))
-            throw new InvalidKeyException("Key is not an XDHPublicKeyImpl");
+        if (!(key instanceof XDHPublicKeyImpl)) {
+            try {
+                key = (XDHPublicKeyImpl) XDHKeyFactory.toXECKey(this.provider, this.alg, key);
+            } catch (Exception exception) {
+                // should not happen
+                throw new InvalidKeyException("KeyFactory is not working as expected");
+            }
+        }
         if (ockXecKeyPriv == null)
             throw new IllegalStateException(
                     "object is not initialized correctly (private key is not received)");
@@ -239,9 +245,7 @@ abstract class XDHKeyAgreement extends KeyAgreementSpi {
 
         if (!(key instanceof XDHPrivateKeyImpl)) {
             try {
-                KeyFactory kf = KeyFactory.getInstance(this.alg);
-                XECPrivateKeySpec spec = kf.getKeySpec(key, XECPrivateKeySpec.class);
-                key = kf.generatePrivate(spec);
+                key = (XDHPrivateKeyImpl) XDHKeyFactory.toXECKey(this.provider, this.alg, key);
             } catch (Exception exception) {
                 // should not happen
                 throw new InvalidKeyException("KeyFactory is not working as expected");
