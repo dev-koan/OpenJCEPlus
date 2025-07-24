@@ -93,6 +93,7 @@ abstract class XDHKeyPairGenerator extends KeyPairGeneratorSpi {
     @Override
     public void initialize(AlgorithmParameterSpec params, SecureRandom random)
             throws InvalidAlgorithmParameterException {
+        System.err.println("should not be here");
         NamedParameterSpec nps = null;
 
         if (params instanceof NamedParameterSpec) {
