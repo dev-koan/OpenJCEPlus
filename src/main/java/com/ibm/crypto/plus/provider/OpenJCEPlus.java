@@ -742,11 +742,11 @@ public final class OpenJCEPlus extends OpenJCEPlusProvider {
          */
         Map<String, String> attrsSecureRandom = new HashMap<>();
         attrsSecureRandom.put("ThreadSafe", "true");
-        aliases = new String[] {"HASHDRBG", "SHA2DRBG"};
+        aliases = new String[] {"SHA2DRBG"};
         putService(new OpenJCEPlusService(jce, "SecureRandom", "SHA256DRBG",
                 "com.ibm.crypto.plus.provider.HASHDRBG$SHA256DRBG", aliases, attrsSecureRandom));
 
-        aliases = new String[] {"SHA5DRBG"};
+        aliases = new String[] {"HASHDRBG", "SHA5DRBG"};
         putService(new OpenJCEPlusService(jce, "SecureRandom", "SHA512DRBG",
                 "com.ibm.crypto.plus.provider.HASHDRBG$SHA512DRBG", aliases, attrsSecureRandom));
 
