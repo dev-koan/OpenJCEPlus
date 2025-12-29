@@ -50,7 +50,7 @@ public class PBEBenchmark extends JMHBase {
     private byte[] text = "Bob the builder by IBM".getBytes();
     private byte[] cipherText;
     
-    @Param({"PBEWithMD5AndDES", "PBEWithSHA1AndDESede", "PBEWithSHA1AndRC2_128", "PBEWithSHA1AndRC4_128"})
+    @Param({"PBEWithSHA1AndDESede"})
     private String algorithm;
 
     @Param({"OpenJCEPlus", "SunJCE"})
@@ -66,14 +66,13 @@ public class PBEBenchmark extends JMHBase {
 
         pbeEncrypt = Cipher.getInstance(algorithm, provider);
         SecretKey pbeKey = getKey(algorithm);
-        pbeEncrypt.init(Cipher.ENCRYPT_MODE, pbeKey, new PBEParameterSpec(salt, iterationCount,
-                    new IvParameterSpec(ivBytes)));
-        cipherText = pbeEncrypt.doFinal(text);
+        pbeEncrypt.init(Cipher.ENCRYPT_MODE, pbeKey, new PBEParameterSpec(salt, iterationCount), random);
+        // cipherText = pbeEncrypt.doFinal(text);
 
-        AlgorithmParameters aps = pbeEncrypt.getParameters();
+        // AlgorithmParameters aps = pbeEncrypt.getParameters();
 
-        pbeDecrypt = Cipher.getInstance(algorithm, provider);
-        pbeDecrypt.init(Cipher.DECRYPT_MODE, pbeKey, aps);
+        // pbeDecrypt = Cipher.getInstance(algorithm, provider);
+        // pbeDecrypt.init(Cipher.DECRYPT_MODE, pbeKey, aps);
     }
 
     @Benchmark

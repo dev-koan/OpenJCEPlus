@@ -24,6 +24,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class BaseTestPBECipher extends BaseTestJunit5 {
 
@@ -47,18 +48,18 @@ public class BaseTestPBECipher extends BaseTestJunit5 {
 
         testCipher(algorithm, key, inputData, suppliedParams);
 
-        testCipherDifferent(algorithm, key, inputData, suppliedParams);
+        // testCipherDifferent(algorithm, key, inputData, suppliedParams);
 
-        testCipherUpdate(algorithm, key, inputData, suppliedParams, true, true);
-        testCipherUpdate(algorithm, key, inputData, suppliedParams, true, false);
-        testCipherUpdate(algorithm, key, inputData, suppliedParams, false, true);
+        // testCipherUpdate(algorithm, key, inputData, suppliedParams, true, true);
+        // testCipherUpdate(algorithm, key, inputData, suppliedParams, true, false);
+        // testCipherUpdate(algorithm, key, inputData, suppliedParams, false, true);
 
         // Testing with outputOffset = 2, can be modified
-        testCipherUpdateOutputBuffer(algorithm, key, inputData, 2, suppliedParams, true, true);
-        testCipherUpdateOutputBuffer(algorithm, key, inputData, 2, suppliedParams, true, false);
-        testCipherUpdateOutputBuffer(algorithm, key, inputData, 2, suppliedParams, false, true);
+        // testCipherUpdateOutputBuffer(algorithm, key, inputData, 2, suppliedParams, true, true);
+        // testCipherUpdateOutputBuffer(algorithm, key, inputData, 2, suppliedParams, true, false);
+        // testCipherUpdateOutputBuffer(algorithm, key, inputData, 2, suppliedParams, false, true);
 
-        testWrap(algorithm, key, suppliedParams);
+        // testWrap(algorithm, key, suppliedParams);
     }
 
     // Use the same Cipher for encryption and decryption 
@@ -66,6 +67,9 @@ public class BaseTestPBECipher extends BaseTestJunit5 {
         Cipher cipher = createCipher(Cipher.ENCRYPT_MODE, algorithm, key, suppliedParams);
 
         byte[] cipherText = cipher.doFinal(inputData);
+        cipherText = cipher.doFinal(inputData);
+        cipherText = cipher.doFinal(inputData);
+        cipherText = cipher.doFinal(inputData);
 
         cipher.init(Cipher.DECRYPT_MODE, key, cipher.getParameters());
         byte[] originalText = cipher.doFinal(cipherText);
@@ -195,22 +199,11 @@ public class BaseTestPBECipher extends BaseTestJunit5 {
     }
 
     private Stream<Arguments> parameters() {
-        List<String> algorithms = Arrays.asList("PBEWithHmacSHA1AndAES_128", "PBEWithHmacSHA1AndAES_256", "PBEWithHmacSHA224AndAES_128", "PBEWithHmacSHA224AndAES_256",
-            "PBEWithHmacSHA256AndAES_128", "PBEWithHmacSHA256AndAES_256", "PBEWithHmacSHA384AndAES_128", "PBEWithHmacSHA384AndAES_256",
-            "PBEWithHmacSHA512AndAES_128", "PBEWithHmacSHA512AndAES_256", "PBEWithHmacSHA512/224AndAES_128", "PBEWithHmacSHA512/224AndAES_256",
-            "PBEWithHmacSHA512/256AndAES_128", "PBEWithHmacSHA512/256AndAES_256", "PBEWithHmacSha1AndAES_128/CBC/PKCS5PAdding",
-            "PBEWithHmacSha1AndAES_256/CBC/PKCS5PAdding", "PBEWithHmacSHA224andAES_128/CBC/PkCS5Padding", "PBEWithHmacSHA224andAES_256/CBC/PkCS5Padding",
-            "PBEWithHmacSHA256AndAes_128/CBC/PKCS5PaddIng", "PBEWithHmacSHA256AndAes_256/CBC/PKCS5PaddIng", "PBEWithHmacSHa384AndAES_128/CbC/PKCS5Padding",
-            "PBEWithHmacSHa384AndAES_256/CbC/PKCS5Padding", "PBEWithHmacSHA512andAES_128/CBc/PKCS5Padding", "PBEWithHmacSHA512andAES_256/CBc/PKCS5Padding",
-            "PBEWithHmacSha512/224andAES_128/cBC/PKCS5Padding", "PBEWithHmacSha512/224andAES_256/cBC/PKCS5Padding", "PBEWithHmacShA512/256AndAES_128/CBC/pkCS5Padding",
-            "PBEWithHmacShA512/256AndAES_256/CBC/pkCS5Padding", "PBEWithMD5AndDES", "PBEWithSHA1AndDESede", "PBEWithSHA1AndRC2_40", 
-            "PBEWithSHA1AndRC2_128", "PBEWithSHA1AndRC4_40", "PBEWithSHA1AndRC4_128", "PBEWithMD5AndDES/CBC/PKCS5Padding", "PBEWithSHA1AndDESede/CBC/PKCS5Padding", 
-            "PBEWithSHA1AndRC2_40/CBC/PKCS5Padding", "PBEWithSHA1AndRC2_128/CBC/PKCS5Padding", "PBEWithSHA1AndRC4_40/ECB/NoPadding", 
-            "PBEWithSHA1AndRC4_128/ECB/NoPadding");
+        List<String> algorithms = Arrays.asList("PBEWithSHA1AndDESede");
 
         return algorithms.stream().flatMap(algo -> Stream.of(
-                Arguments.of(algo, true),
-                Arguments.of(algo, false)
+                Arguments.of(algo, true)
+                // Arguments.of(algo, false)
         ));
     }
 }

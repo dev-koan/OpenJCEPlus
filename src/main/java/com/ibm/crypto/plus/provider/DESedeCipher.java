@@ -50,7 +50,6 @@ public final class DESedeCipher extends CipherSpi implements DESConstants {
 
         try {
             byte[] output = new byte[engineGetOutputSize(inputLen)];
-
             int outputLen = symmetricCipher.doFinal(input, inputOffset, inputLen, output, 0);
             if (outputLen < output.length) {
                 byte[] out = Arrays.copyOfRange(output, 0, outputLen);

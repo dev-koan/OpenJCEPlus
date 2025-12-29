@@ -15,8 +15,178 @@
 #include <string.h>
 
 #include "com_ibm_crypto_plus_provider_ock_NativeInterface.h"
-#include "Utils.h"
 #include <stdint.h>
+#include "Utils.h"
+
+//============================================================================
+/*
+ * Class:     com_ibm_crypto_plus_provider_ock_NativeInterface
+ * Method:    PBE_init
+ */
+// JNIEXPORT jint JNICALL
+// Java_com_ibm_crypto_plus_provider_ock_NativeInterface_PBE_1init(
+//     JNIEnv* env, jclass thisObj, jlong contextId, jbyteArray password,
+//     jbyteArray salt, jbyteArray input, jint iterations, jint is_en) {
+//     static const char* functionName   = "NativeInterface.PBE_init";
+//     ICC_CTX*           ockCtx         = (ICC_CTX*)((intptr_t)contextId);
+//     const char*        passwordNative = NULL;
+//     unsigned char*     saltNative     = NULL;
+//     jboolean           isCopy         = 0;
+//     int                id             = 0;
+//     int                passwordLength = 0;
+//     int                saltLength     = 0;
+    
+//     saltNative = (*env)->GetPrimitiveArrayCritical(env, salt, &isCopy);
+//     if (NULL == saltNative) {
+// #ifdef DEBUG_PBE_DETAIL
+//         if (debug) {
+//             gslogMessage("DETAIL_PBE FAILURE: Failed to get salt");
+//         }
+// #endif
+//         throwOCKException(env, 0, "Failed to get salt");
+//         goto cleanup;
+//     }
+//     saltLength = (*env)->GetArrayLength(env, salt);
+
+//     passwordNative = (*env)->GetPrimitiveArrayCritical(env, password, &isCopy);
+//     if (NULL == passwordNative) {
+// #ifdef DEBUG_PBE_DETAIL
+//         if (debug) {
+//             gslogMessage("DETAIL_PBE FAILURE: Failed to get password data");
+//         }
+// #endif
+//         throwOCKException(env, 0, "Failed to get password data");
+//         goto cleanup;
+//     }
+//     passwordLength = (*env)->GetArrayLength(env, password);
+
+//     PBEPARAM *pbe;
+//     ASN1_TYPE *param;
+
+//     pbe = PBEPARAM_new();
+//     ASN1_OCTET_STRING_set(pbe->salt, salt, saltLength);
+
+//     ASN1_INTEGER_set(pbe->iter, iterations);
+//     param = ASN1_TYPE_new();
+//     param->type = V_ASN1_SEQUENCE;
+//     param->value.sequence = ASN1_STRING_new();
+//     int len = i2d_PBE2PARAM(pbe, &param->value.sequence->data);
+//     param->value.sequence->length = len;
+//     PBE2PARAM_free(pbe);
+
+//     EVP_CIPHER_CTX *ctx;
+//     ctx = EVP_CIPHER_CTX_new();
+
+//     PKCS12_PBE_keyivgen(ctx, passwordNative, passwordLength, param, EVP_des_ede3_cbc(), EVP_sha1(), is_en);
+    
+
+// }
+//============================================================================
+/*
+ * Class:     com_ibm_crypto_plus_provider_ock_NativeInterface
+ * Method:    PBE_doFinal
+ */
+// JNIEXPORT jbyteArray JNICALL
+// Java_com_ibm_crypto_plus_provider_ock_NativeInterface_PBE_1doFinal(
+//     JNIEnv* env, jclass thisObj, jlong contextId, jstring algorithm,
+//     jbyteArray password, jbyteArray salt, jbyteArray input, jint iterations,
+//     jint is_en, jint outLength) {
+//     static const char* functionName   = "NativeInterface.PBE_doFinal";
+//     // ICC_CTX*           ockCtx         = (ICC_CTX*)((intptr_t)contextId);
+//     // ICC_X509_ALGOR*    algor          = NULL;
+//     // const char*        text           = NULL;
+//     const char*        passwordNative = NULL;
+//     unsigned char*     saltNative     = NULL;
+//     unsigned char*     inputNative    = NULL;
+//     unsigned char*     resultNative   = NULL;
+//     jbyteArray         resultText     = NULL;
+//     jboolean           isCopy         = 0;
+//     // int                id             = 0;
+//     int                passwordLength = 0;
+//     int                saltLength     = 0;
+//     int                inputLength    = 0;
+//     int                dataLength     = 0;
+
+//     if (debug) {
+//         gslogFunctionEntry(functionName);
+//     }
+
+//     saltNative = (*env)->GetPrimitiveArrayCritical(env, salt, &isCopy);
+//     if (NULL == saltNative) {
+// #ifdef DEBUG_PBE_DETAIL
+//         if (debug) {
+//             gslogMessage("DETAIL_PBE FAILURE: Failed to get salt");
+//         }
+// #endif
+//         throwOCKException(env, 0, "Failed to get salt");
+//         goto cleanup;
+//     }
+//     saltLength = (*env)->GetArrayLength(env, salt);
+
+//     passwordNative = (*env)->GetPrimitiveArrayCritical(env, password, &isCopy);
+//     if (NULL == passwordNative) {
+// #ifdef DEBUG_PBE_DETAIL
+//         if (debug) {
+//             gslogMessage("DETAIL_PBE FAILURE: Failed to get password data");
+//         }
+// #endif
+//         throwOCKException(env, 0, "Failed to get password data");
+//         goto cleanup;
+//     }
+//     passwordLength = (*env)->GetArrayLength(env, password);
+
+//     PBEPARAM *pbe;
+//     ASN1_TYPE *param;
+
+//     pbe = PBEPARAM_new();
+//     ASN1_OCTET_STRING_set(pbe->salt, saltNative, saltLength);
+
+//     ASN1_INTEGER_set(pbe->iter, iterations);
+//     param = ASN1_TYPE_new();
+//     param->type = V_ASN1_SEQUENCE;
+//     param->value.sequence = ASN1_STRING_new();
+//     int len = i2d_PBEPARAM(pbe, &param->value.sequence->data);
+//     param->value.sequence->length = len;
+//     PBEPARAM_free(pbe);
+
+//     EVP_CIPHER_CTX *ctx;
+//     ctx = EVP_CIPHER_CTX_new();
+
+//     PKCS12_PBE_keyivgen(ctx, passwordNative, passwordLength, param, EVP_des_ede3_cbc(), EVP_sha1(), is_en);
+
+//     inputNative = (*env)->GetPrimitiveArrayCritical(env, input, &isCopy);
+//     inputLength = (*env)->GetArrayLength(env, input);
+
+//     resultText = (*env)->NewByteArray(env, outLength);
+//     resultNative =(unsigned char *)((*env)->GetPrimitiveArrayCritical(env, resultText, &isCopy));
+
+//     EVP_EncryptUpdate(ctx, resultNative, &dataLength, inputNative, inputLength);
+//     EVP_EncryptFinal_ex(ctx, resultNative + dataLength, &dataLength);
+
+//     PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt, int saltlen, int id, int iter, int n, unsigned char *out, const EVP_MD *md_type)
+
+// cleanup:
+// //     if (NULL != saltNative) {
+// //         (*env)->ReleasePrimitiveArrayCritical(env, salt, saltNative, 0);
+// //         saltNative = NULL;
+// //     }
+// //     if (NULL != passwordNative) {
+// //         (*env)->ReleasePrimitiveArrayCritical(env, password,
+// //                                               (void*)passwordNative, 0);
+// //         passwordNative = NULL;
+// //     }
+// //     if (NULL != inputNative) {
+// //         (*env)->ReleasePrimitiveArrayCritical(env, input, inputNative, 0);
+// //         inputNative = NULL;
+// //     }
+
+// //     if (debug) {
+// //         gslogFunctionExit(functionName);
+// //     }
+
+
+//     return resultText;
+// }
 
 //============================================================================
 /*

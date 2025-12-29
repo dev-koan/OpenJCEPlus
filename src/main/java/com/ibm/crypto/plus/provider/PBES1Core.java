@@ -10,6 +10,7 @@ package com.ibm.crypto.plus.provider;
 
 import com.ibm.crypto.plus.provider.ock.OCKException;
 import com.ibm.crypto.plus.provider.ock.PBES1;
+import com.ibm.crypto.plus.provider.ock.PKCS12Key;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.security.AlgorithmParameters;
@@ -28,7 +29,9 @@ import javax.crypto.CipherSpi;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.ShortBufferException;
+import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.PBEParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 
 abstract class PBES1Core extends CipherSpi {
     private final String pbeAlgo;
@@ -36,7 +39,9 @@ abstract class PBES1Core extends CipherSpi {
     private int is_en;
     private int iterationCount = 0;
     protected int blksize;
+    private DESedeCipher cipher;
     private byte[] salt = null;
+    private byte[] iv = null;
     private byte[] password;
     private ByteArrayOutputStream buffer;
     private OpenJCEPlusProvider provider = null;
@@ -57,6 +62,7 @@ abstract class PBES1Core extends CipherSpi {
         engineSetMode(mode);
         engineSetPadding(padding);
         buffer = new ByteArrayOutputStream();
+        cipher = new DESedeCipher(provider);
     }
 
     protected void engineSetMode(String mode) throws NoSuchAlgorithmException {
@@ -144,6 +150,7 @@ abstract class PBES1Core extends CipherSpi {
                               AlgorithmParameterSpec params,
                               SecureRandom random)
         throws InvalidKeyException, InvalidAlgorithmParameterException {
+        System.out.println("in init");
         if (key == null) {
             throw new InvalidKeyException("Provided key is null");
         }
@@ -159,52 +166,67 @@ abstract class PBES1Core extends CipherSpi {
         this.opmode = opmode;
         this.is_en = (this.opmode == Cipher.ENCRYPT_MODE || this.opmode == Cipher.WRAP_MODE) ? 1 : 0;
 
-        byte[] keySalt = null;
-        int keyIterationCount = 0;
-        if (key instanceof javax.crypto.interfaces.PBEKey) {
-            javax.crypto.interfaces.PBEKey pkey = (javax.crypto.interfaces.PBEKey) key;
-            keySalt = pkey.getSalt();
-            keyIterationCount = pkey.getIterationCount();
-        }
+        // byte[] keySalt = null;
+        // int keyIterationCount = 0;
+        // if (key instanceof javax.crypto.interfaces.PBEKey) {
+        //     javax.crypto.interfaces.PBEKey pkey = (javax.crypto.interfaces.PBEKey) key;
+        //     keySalt = pkey.getSalt();
+        //     keyIterationCount = pkey.getIterationCount();
+        // }
 
         if (params == null) {
-            if ((this.opmode == Cipher.DECRYPT_MODE || this.opmode == Cipher.UNWRAP_MODE) &&
-                (keySalt == null || keyIterationCount == 0)) {
-                throw new InvalidAlgorithmParameterException("Parameters missing");
-            }
+            // if ((this.opmode == Cipher.DECRYPT_MODE || this.opmode == Cipher.UNWRAP_MODE) &&
+            //     (keySalt == null || keyIterationCount == 0)) {
+            //     throw new InvalidAlgorithmParameterException("Parameters missing");
+            // }
 
-            this.iterationCount = (keyIterationCount == 0) ? (pbeAlgo.equals("PBEWithMD5AndDES") ? 
-                    DEFAULT_ITERATION_COUNT_MD5AndDES : DEFAULT_ITERATION_COUNT) : keyIterationCount;
+            this.iterationCount = DEFAULT_ITERATION_COUNT;
 
-            this.salt = keySalt == null ? (pbeAlgo.equals("PBEWithMD5AndDES") ? 
-                    new byte[DEFAULT_SALT_LENGTH_MD5AndDES] : new byte[DEFAULT_SALT_LENGTH]) : keySalt;
+            this.salt =  new byte[DEFAULT_SALT_LENGTH];
+            provider.getSecureRandom(null).nextBytes(this.salt);
 
-            if (keySalt == null) {
-                provider.getSecureRandom(null).nextBytes(this.salt);
-            }
+            // if (keySalt == null) {
+            //     provider.getSecureRandom(null).nextBytes(this.salt);
+            // }
         } else {
             if (params instanceof PBEParameterSpec) {
                 PBEParameterSpec pbespec = (PBEParameterSpec) params;
-                if (keyIterationCount != 0 && (keyIterationCount != pbespec.getIterationCount())) {
-                    throw new InvalidAlgorithmParameterException("Different iteration count between key and params");
-                }
+                // if (keyIterationCount != 0 && (keyIterationCount != pbespec.getIterationCount())) {
+                //     throw new InvalidAlgorithmParameterException("Different iteration count between key and params");
+                // }
                 this.iterationCount = pbespec.getIterationCount();
 
-                if (keySalt != null && (!Arrays.equals(pbespec.getSalt(), keySalt))) {
-                    throw new InvalidAlgorithmParameterException("Different salt between key and params");
-                }
+                // if (keySalt != null && (!Arrays.equals(pbespec.getSalt(), keySalt))) {
+                //     throw new InvalidAlgorithmParameterException("Different salt between key and params");
+                // }
                 this.salt = pbespec.getSalt();
             } else {
                 throw new InvalidAlgorithmParameterException("PBEParameterSpec type required");
             }
         }
 
-        if (salt.length < 8) {
-            throw new InvalidAlgorithmParameterException("Salt must be at least 8 bytes long");
+        // if (salt.length < 8) {
+        //     throw new InvalidAlgorithmParameterException("Salt must be at least 8 bytes long");
+        // }
+        // if (iterationCount <= 0) {
+        //     throw new InvalidAlgorithmParameterException("IterationCount must be a positive number");
+        // }
+
+        try {
+            this.iv = PKCS12Key.derive(provider.getOCKContext(), this.password, this.salt, this.iterationCount, 8, 2);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        if (iterationCount <= 0) {
-            throw new InvalidAlgorithmParameterException("IterationCount must be a positive number");
+
+        byte[] derivedKey = null;
+        try {
+            derivedKey = PKCS12Key.derive(provider.getOCKContext(), this.password, this.salt, this.iterationCount, 24, 1);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+        SecretKeySpec cipherKey = new SecretKeySpec(derivedKey, "DESede");
+        cipher.engineInit(this.opmode, cipherKey, new IvParameterSpec(this.iv), random);
+
     }
 
     protected void engineInit(int opmode, Key key, AlgorithmParameters params,
@@ -243,21 +265,23 @@ abstract class PBES1Core extends CipherSpi {
     protected byte[] engineDoFinal(byte[] input, int inputOffset, int inputLen)
         throws IllegalBlockSizeException, BadPaddingException {
 
-        validateCipher(inputLen, false, -1);
-        writeToBuffer(input, inputOffset, inputLen);
+        // validateCipher(inputLen, false, -1);
+        // writeToBuffer(input, inputOffset, inputLen);
 
-        if ((this.opmode == Cipher.DECRYPT_MODE && buffer.size() == 0) ||
-                (this.opmode == Cipher.ENCRYPT_MODE && buffer.size() == 0 && blksize == 0)) {
-            return new byte[0];
-        }
+        // if ((this.opmode == Cipher.DECRYPT_MODE && buffer.size() == 0) ||
+        //         (this.opmode == Cipher.ENCRYPT_MODE && buffer.size() == 0 && blksize == 0)) {
+        //     return new byte[0];
+        // }
 
-        try {
-            input = buffer.toByteArray();
-            buffer.reset();
-            return PBES1.PBEdoFinal(provider.getOCKContext(), pbeAlgo, password, salt, input, iterationCount, is_en);
-        } catch (OCKException e) {
-            throw new IllegalBlockSizeException("Unable to process input data" + e.getMessage());
-        }
+        // try {
+        //     input = buffer.toByteArray();
+        //     buffer.reset();
+        //     int ol = engineGetOutputSize(input.length);
+        //     return PBES1.PBEdoFinal(provider.getOCKContext(), pbeAlgo, password, salt, input, iterationCount, is_en, ol);
+        // } catch (OCKException e) {
+        //     throw new IllegalBlockSizeException("Unable to process input data" + e.getMessage());
+        // }
+        return cipher.engineDoFinal(input, inputOffset, inputLen);
     }
 
     protected int engineDoFinal(byte[] input, int inputOffset, int inputLen,
@@ -277,7 +301,8 @@ abstract class PBES1Core extends CipherSpi {
         try {
             input = buffer.toByteArray();
             buffer.reset();
-            res = PBES1.PBEdoFinal(provider.getOCKContext(), pbeAlgo, password, salt, input, iterationCount, is_en);
+            int ol = engineGetOutputSize(input.length);
+            res = PBES1.PBEdoFinal(provider.getOCKContext(), pbeAlgo, password, salt, input, iterationCount, is_en, ol);
             if (outputOffset + res.length > output.length) {
                 throw new ShortBufferException("Output buffer must be (at least) " + res.length + " bytes long");
             }
@@ -302,8 +327,8 @@ abstract class PBES1Core extends CipherSpi {
                 throw new InvalidKeyException("Cannot get an encoding of " +
                                               "the key to be wrapped");
             }
-
-            result = PBES1.PBEdoFinal(provider.getOCKContext(), pbeAlgo, password, salt, encodedKey, iterationCount, is_en);
+            int ol = engineGetOutputSize(encodedKey.length);
+            result = PBES1.PBEdoFinal(provider.getOCKContext(), pbeAlgo, password, salt, encodedKey, iterationCount, is_en, ol);
         } catch (OCKException e) {
             throw new IllegalBlockSizeException("Unable to process key" + e.getMessage());
         }  finally {
@@ -320,7 +345,8 @@ abstract class PBES1Core extends CipherSpi {
         validateCipher(-1, true, Cipher.UNWRAP_MODE);
 
         try {
-            byte[] encodedKey = PBES1.PBEdoFinal(provider.getOCKContext(), pbeAlgo, password, salt, wrappedKey, iterationCount, is_en);
+            int ol = engineGetOutputSize(wrappedKey.length);
+            byte[] encodedKey = PBES1.PBEdoFinal(provider.getOCKContext(), pbeAlgo, password, salt, wrappedKey, iterationCount, is_en, ol);
             try {
                 return ConstructKeys.constructKey(provider, encodedKey, wrappedKeyAlgorithm, wrappedKeyType);
             } finally {

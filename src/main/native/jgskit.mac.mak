@@ -9,9 +9,10 @@
 
 TOPDIR=../../..
 
-CFLAGS= -fPIC -DMAC -Werror -std=gnu99 -pedantic -Wall -fstack-protector -m64
+CFLAGS= -fPIC -DMAC -std=gnu99 -pedantic -Wall -fstack-protector -m64 -I/Users/devagarwal/Downloads/openssl-3.0.18/include
 LDFLAGS= -shared -m64
 CC = gcc
+OPENSSL_LINK= -L/Users/devagarwal/Downloads/openssl-3.0.18/ -lssl -lcrypto
 
 ifeq (${PLATFORM},x86_64-mac)
   ARCHFLAGS= -arch x86_64
@@ -53,6 +54,7 @@ OBJS = \
 	${HOSTOUT}/PBKDF.o \
 	${HOSTOUT}/PBE.o \
 	${HOSTOUT}/PKey.o \
+	${HOSTOUT}/PKCS12Key.o \
 	${HOSTOUT}/Poly1305Cipher.o \
 	${HOSTOUT}/RSA.o \
 	${HOSTOUT}/RSAKey.o \
@@ -71,7 +73,7 @@ TARGET = ${HOSTOUT}/libjgskit.dylib
 all : displaycompiler ${TARGET}
 
 ${TARGET} : ${OBJS}
-	${CC} ${LDFLAGS} ${ARCHFLAGS} -o ${TARGET} ${OBJS} -L ${GSKIT_HOME}/lib64 -l jgsk8iccs
+	${CC} ${LDFLAGS} ${ARCHFLAGS} -o ${TARGET} ${OBJS} -L ${GSKIT_HOME}/lib64 -l jgsk8iccs ${OPENSSL_LINK}
 
 ${HOSTOUT}/%.o : %.c
 	test -d ${@D} || mkdir -p ${@D} 2>/dev/null

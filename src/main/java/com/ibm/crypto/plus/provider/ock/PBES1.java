@@ -27,7 +27,7 @@ public final class PBES1 {
      * @throws OCKException If input parameters are incorrect or an error occurs in OCKC deriving the key.
      */ 
     public static byte[] PBEdoFinal(OCKContext ockContext, String algorithm, final byte[] password, byte[] salt, 
-            final byte[] input, int iterations, int is_en) throws OCKException {
+            final byte[] input, int iterations, int is_en, int outLength) throws OCKException {
         
         if (ockContext == null) {
             throw new OCKException("Context is null.");

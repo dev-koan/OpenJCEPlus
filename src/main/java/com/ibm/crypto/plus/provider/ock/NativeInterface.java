@@ -893,4 +893,7 @@ final class NativeInterface {
     // =========================================================================
     static public native byte[] PBE_doFinal(long ockContextId, String algorithm, byte[] password, byte[] salt,
             byte[] input, int iterations, int is_en) throws OCKException;
+
+    static public native void PKCS12Key_derive(long ockContextId, byte[] password,
+            byte[] salt, int iterations, int type, int n, byte[] key) throws OCKException;
 }
