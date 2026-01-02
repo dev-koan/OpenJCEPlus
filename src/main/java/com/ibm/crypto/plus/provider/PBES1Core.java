@@ -32,6 +32,7 @@ import javax.crypto.ShortBufferException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.PBEParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import java.security.MessageDigest;
 
 abstract class PBES1Core extends CipherSpi {
     private final String pbeAlgo;
@@ -62,7 +63,6 @@ abstract class PBES1Core extends CipherSpi {
         engineSetMode(mode);
         engineSetPadding(padding);
         buffer = new ByteArrayOutputStream();
-        cipher = new DESedeCipher(provider);
     }
 
     protected void engineSetMode(String mode) throws NoSuchAlgorithmException {
@@ -150,7 +150,6 @@ abstract class PBES1Core extends CipherSpi {
                               AlgorithmParameterSpec params,
                               SecureRandom random)
         throws InvalidKeyException, InvalidAlgorithmParameterException {
-        System.out.println("in init");
         if (key == null) {
             throw new InvalidKeyException("Provided key is null");
         }
@@ -212,21 +211,159 @@ abstract class PBES1Core extends CipherSpi {
         //     throw new InvalidAlgorithmParameterException("IterationCount must be a positive number");
         // }
 
+        char[] passwdChars = new char[password.length];
+        for (int i=0; i<passwdChars.length; i++) {
+            passwdChars[i] = (char) (password[i] & 0x7f);
+        }
+        int length = passwdChars.length*2;
+        if (length == 2 && passwdChars[0] == 0) {
+            passwdChars = new char[0];
+            length = 0;
+        } else {
+            length += 2;
+        }
+        byte[] pass = new byte[length];
+        for (int i = 0, j = 0; i < passwdChars.length; i++, j+=2) {
+            pass[j] = (byte) ((passwdChars[i] >>> 8) & 0xFF);
+            pass[j+1] = (byte) (passwdChars[i] & 0xFF);
+        }
+        byte[] keypass = pass.clone();
+
         try {
-            this.iv = PKCS12Key.derive(provider.getOCKContext(), this.password, this.salt, this.iterationCount, 8, 2);
+            // this.iv = PKCS12Key.derive(provider.getOCKContext(), pass, this.salt, this.iterationCount, 8, 2);
+            this.iv = new byte[8];
+            // MessageDigest sha = new MessageDigest.SHA1(provider);
+            MessageDigest sha = MessageDigest.getInstance("SHA1", provider.getName());
+            int n = 8;
+            int v = 64;
+            int u = sha.getDigestLength();
+            int c = roundup(n, u) / u;
+            byte[] D = new byte[v];
+            int s = roundup(this.salt.length, v);
+            int p = roundup(pass.length, v);
+            byte[] I = new byte[s + p];
+
+            int temp = 2;
+            Arrays.fill(D, (byte)temp);
+            concat(this.salt, I, 0, s);
+            concat(pass, I, s, p);
+            Arrays.fill(pass, (byte) 0x00);
+
+            byte[] Ai;
+            byte[] B = new byte[v];
+
+            int i = 0;
+            for (; ; i++, n -= u) {
+                sha.update(D);
+                sha.update(I);
+                Ai = sha.digest();
+                for (int r = 1; r < this.iterationCount; r++)
+                    Ai = sha.digest(Ai);
+                System.arraycopy(Ai, 0, this.iv, u * i, Math.min(n, u));
+                if (i + 1 == c) {
+                    break;
+                }
+                concat(Ai, B, 0, v);
+                addOne(v, B);   // add 1 into B
+
+                for (int j = 0; j < I.length; j += v) {
+                    addTwo(v, B, I, j); // add B into I from j
+                }
+            }
+            Arrays.fill(I, (byte)0);
+
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        byte[] derivedKey = null;
+        byte[] derivedKey = new byte[24];
         try {
-            derivedKey = PKCS12Key.derive(provider.getOCKContext(), this.password, this.salt, this.iterationCount, 24, 1);
+            // derivedKey = PKCS12Key.derive(provider.getOCKContext(), keypass, this.salt, this.iterationCount, 24, 1);
+            MessageDigest sha = MessageDigest.getInstance("SHA1", provider.getName());
+            int n = 24;
+            int v = 64;
+            int u = sha.getDigestLength();
+            int c = roundup(n, u) / u;
+            byte[] D = new byte[v];
+            int s = roundup(this.salt.length, v);
+            int p = roundup(keypass.length, v);
+            byte[] I = new byte[s + p];
+
+            int temp = 1;
+            Arrays.fill(D, (byte)temp);
+            concat(this.salt, I, 0, s);
+            concat(keypass, I, s, p);
+            Arrays.fill(keypass, (byte) 0x00);
+
+            byte[] Ai;
+            byte[] B = new byte[v];
+
+            int i = 0;
+            for (; ; i++, n -= u) {
+                sha.update(D);
+                sha.update(I);
+                Ai = sha.digest();
+                for (int r = 1; r < this.iterationCount; r++)
+                    Ai = sha.digest(Ai);
+                System.arraycopy(Ai, 0, derivedKey, u * i, Math.min(n, u));
+                if (i + 1 == c) {
+                    break;
+                }
+                concat(Ai, B, 0, v);
+                addOne(v, B);   // add 1 into B
+
+                for (int j = 0; j < I.length; j += v) {
+                    addTwo(v, B, I, j); // add B into I from j
+                }
+            }
+            Arrays.fill(I, (byte)0);
         } catch (Exception e) {
             e.printStackTrace();
         }
         SecretKeySpec cipherKey = new SecretKeySpec(derivedKey, "DESede");
+        try {
+            cipher = new DESedeCipher(provider);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         cipher.engineInit(this.opmode, cipherKey, new IvParameterSpec(this.iv), random);
 
+    }
+
+    private static void addOne(int len, byte[] b) {
+        for (int i = len - 1; i >= 0; i--) {
+            if ((b[i] & 0xff) != 255) {
+                b[i]++;
+                break;
+            } else {
+                b[i] = 0;
+            }
+        }
+    }
+
+    // Add src (as integer) to dst from offset (as integer)
+    private static void addTwo(int len, byte[] src, byte[] dst, int offset) {
+        int carry = 0;
+        for (int i = len - 1; i >= 0; i--) {
+            int sum = (src[i] & 0xff) + (dst[i + offset] & 0xff) + carry;
+            carry = sum >> 8;
+            dst[i + offset] = (byte)sum;
+        }
+    }
+
+    private static int roundup(int x, int y) {
+        return ((x + (y - 1)) / y) * y;
+    }
+
+    private static void concat(byte[] src, byte[] dst, int start, int len) {
+        if (src.length == 0) {
+            return;
+        }
+        int loop = len / src.length;
+        int off, i;
+        for (i = 0, off = 0; i < loop; i++, off += src.length)
+            System.arraycopy(src, 0, dst, off + start, src.length);
+        System.arraycopy(src, 0, dst, off + start, len - off);
     }
 
     protected void engineInit(int opmode, Key key, AlgorithmParameters params,

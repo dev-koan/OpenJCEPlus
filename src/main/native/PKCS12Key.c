@@ -45,5 +45,22 @@ Java_com_ibm_crypto_plus_provider_ock_NativeInterface_PKCS12Key_1derive(
 
     keyNative = (*env)->GetPrimitiveArrayCritical(env, key, &isCopy);
 
-    PKCS12_key_gen_uni(passwordNative, passwordLength, saltNative, saltLength, type, iterations, n, keyNative, EVP_sha1());
+    if (!PKCS12_key_gen_uni(passwordNative, passwordLength, saltNative, saltLength, type, iterations, n, keyNative, EVP_sha1())) {
+        throwOCKException(env, 0, "Key derivation failed");
+    }
+
+    if (NULL != saltNative) {
+        (*env)->ReleasePrimitiveArrayCritical(env, salt, saltNative, JNI_ABORT);
+        saltNative = NULL;
+    }
+    if (NULL != passwordNative) {
+        (*env)->ReleasePrimitiveArrayCritical(env, password,
+                                              passwordNative, JNI_ABORT);
+        passwordNative = NULL;
+    }
+    if (NULL != keyNative) {
+        (*env)->ReleasePrimitiveArrayCritical(env, key,
+                                              keyNative, 0);
+        keyNative = NULL;
+    }
 }

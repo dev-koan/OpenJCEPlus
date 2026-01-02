@@ -31,6 +31,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class BaseTestPBECipherInterop extends BaseTestJunit5Interop {
 
@@ -318,7 +319,14 @@ public class BaseTestPBECipherInterop extends BaseTestJunit5Interop {
         List<String> algorithms = Arrays.asList("PBEWithSHA1AndDESede");
 
         return algorithms.stream().flatMap(algo -> Stream.of(
-                Arguments.of(algo, true, getProviderName(), getInteropProviderName())
+                Arguments.of(algo, false, getProviderName(), getInteropProviderName())
         ));
+    }
+
+    private void printByte(byte[] arr) {
+        for (int i = 0; i < arr.length; i++) {
+            System.out.println(arr[i]);
+        }
+        System.out.println();
     }
 }

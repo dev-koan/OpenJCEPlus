@@ -19,6 +19,7 @@ import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.PBEParameterSpec;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
+import org.openjdk.jmh.annotations.Level;
 import org.openjdk.jmh.annotations.Measurement;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.OutputTimeUnit;
@@ -40,13 +41,10 @@ public class PBEBenchmark extends JMHBase {
     
     private Cipher pbeEncrypt;
     private Cipher pbeDecrypt;
-
+    private SecretKey pbeKey;
     private byte[] salt = new byte[8];
     private SecureRandom random = new SecureRandom();
-    private byte[] ivBytes = {
-        0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18,
-        0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, 0x20,
-    };
+
     private byte[] text = "Bob the builder by IBM".getBytes();
     private byte[] cipherText;
     
@@ -65,8 +63,7 @@ public class PBEBenchmark extends JMHBase {
         random.nextBytes(salt);
 
         pbeEncrypt = Cipher.getInstance(algorithm, provider);
-        SecretKey pbeKey = getKey(algorithm);
-        pbeEncrypt.init(Cipher.ENCRYPT_MODE, pbeKey, new PBEParameterSpec(salt, iterationCount), random);
+        pbeKey = getKey(algorithm);
         // cipherText = pbeEncrypt.doFinal(text);
 
         // AlgorithmParameters aps = pbeEncrypt.getParameters();
@@ -75,14 +72,19 @@ public class PBEBenchmark extends JMHBase {
         // pbeDecrypt.init(Cipher.DECRYPT_MODE, pbeKey, aps);
     }
 
-    @Benchmark
-    public byte[] encrypt() throws Exception {
-        return pbeEncrypt.doFinal(text);
-    }
+    // @Benchmark
+    // public byte[] encrypt() throws Exception {
+    //     return pbeEncrypt.doFinal(text);
+    // }
+
+    // @Benchmark
+    // public byte[] decrypt() throws Exception {
+    //     return pbeDecrypt.doFinal(cipherText);
+    // }
 
     @Benchmark
-    public byte[] decrypt() throws Exception {
-        return pbeDecrypt.doFinal(cipherText);
+    public void init() throws Exception {
+        pbeEncrypt.init(Cipher.ENCRYPT_MODE, pbeKey, new PBEParameterSpec(salt, iterationCount));
     }
 
     private SecretKey getKey(String algo) throws Exception {

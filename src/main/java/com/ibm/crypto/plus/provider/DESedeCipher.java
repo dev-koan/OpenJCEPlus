@@ -238,6 +238,8 @@ public final class DESedeCipher extends CipherSpi implements DESConstants {
 
         try {
             if (symmetricCipher == null) {
+                mode = "CBC";
+                padding = Padding.PKCS5Padding;
                 symmetricCipher = SymmetricCipher.getInstanceDESede(provider.getOCKContext(), mode,
                         padding, provider);
             }
