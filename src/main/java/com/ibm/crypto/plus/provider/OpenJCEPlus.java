@@ -215,6 +215,14 @@ public final class OpenJCEPlus extends OpenJCEPlusProvider {
         putService(new OpenJCEPlusService(jce, "AlgorithmParameters", "ChaCha20-Poly1305",
                 "com.ibm.crypto.plus.provider.ChaCha20Poly1305Parameters", aliases));
 
+        aliases = null;
+        putService(new OpenJCEPlusService(jce, "AlgorithmParameters", "RC2",
+                "com.ibm.crypto.plus.provider.RC2Parameters", aliases));
+        
+        aliases = null;
+        putService(new OpenJCEPlusService(jce, "AlgorithmParameters", "RC4",
+                "com.ibm.crypto.plus.provider.RC4Parameters", aliases));
+
         /* =======================================================================
          * Algorithm parameter generation engines
          * =======================================================================
@@ -372,6 +380,14 @@ public final class OpenJCEPlus extends OpenJCEPlusProvider {
         aliases = null;
         putService(new OpenJCEPlusService(jce, "Cipher", "PBEWithHmacSHA512/256AndAES_256",
                 "com.ibm.crypto.plus.provider.PBES2Core$HmacSHA512_256AndAES_256", aliases));
+        
+        aliases = null;
+        putService(new OpenJCEPlusService(jce, "Cipher", "RC2",
+                "com.ibm.crypto.plus.provider.RC2Cipher", aliases));
+        
+        aliases = null;
+        putService(new OpenJCEPlusService(jce, "Cipher", "RC4",
+                "com.ibm.crypto.plus.provider.RC4Cipher", aliases));
 
         /* =======================================================================
          * Key agreement
