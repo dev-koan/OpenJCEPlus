@@ -222,8 +222,10 @@ public final class DHParameterGenerator extends AlgorithmParameterGeneratorSpi {
             throw new InvalidAlgorithmParameterException(
                     "Params must be instance of DHGenParameterSpec");
         }
+        System.out.println("in init");
 
         DHGenParameterSpec dhParamSpec = (DHGenParameterSpec) genParamSpec;
+        System.out.println("key size " + dhParamSpec.getPrimeSize());
         keysize = dhParamSpec.getPrimeSize();
         exponentSize = dhParamSpec.getExponentSize();
         if ((exponentSize <= 0) || (exponentSize >= keysize)) {

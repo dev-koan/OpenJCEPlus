@@ -110,7 +110,7 @@ public final class DSAParameterGenerator extends AlgorithmParameterGeneratorSpi 
             throw new InvalidAlgorithmParameterException(
                     "Params must be instance of DSAGenParameterSpec");
         }
-
+        System.out.println("in init");
         DSAGenParameterSpec dsaGenParams = (DSAGenParameterSpec) genParamSpec;
         // This support is added because JCK tests expect to pass it.
         // qLen and seedLen from genParamSpec are ignored, because
@@ -122,6 +122,7 @@ public final class DSAParameterGenerator extends AlgorithmParameterGeneratorSpi 
         } catch (InvalidKeyException e) {
             throw new InvalidParameterException(e.getMessage());
         }
+        System.out.println("key len" + dsaGenParams.getPrimePLength());
         this.keysize = dsaGenParams.getPrimePLength();
     }
 
