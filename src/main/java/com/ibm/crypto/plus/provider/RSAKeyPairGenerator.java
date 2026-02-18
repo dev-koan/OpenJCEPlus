@@ -17,6 +17,7 @@ import java.security.InvalidParameterException;
 import java.security.KeyPair;
 import java.security.KeyPairGeneratorSpi;
 import java.security.SecureRandom;
+import java.security.interfaces.RSAPrivateKey;
 import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.RSAKeyGenParameterSpec;
 import sun.security.x509.AlgorithmId;
@@ -118,7 +119,7 @@ abstract class RSAKeyPairGenerator extends KeyPairGeneratorSpi {
         try {
             RSAKey rsaKey = RSAKey.generateKeyPair(provider.getOCKContext(), this.keysize,
                     this.publicExponent, provider);
-            java.security.interfaces.RSAPrivateKey privKey = new RSAPrivateCrtKey(rsaId, provider, rsaKey);
+            java.security.interfaces.RSAPrivateKey privKey = new RSAPrivateKey(rsaId, provider, rsaKey);
             java.security.interfaces.RSAPublicKey pubKey = new RSAPublicKey(rsaId, provider, rsaKey);
             return new KeyPair(pubKey, privKey);
         } catch (Exception e) {
