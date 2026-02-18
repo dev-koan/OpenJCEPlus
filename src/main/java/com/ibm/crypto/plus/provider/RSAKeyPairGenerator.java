@@ -40,6 +40,7 @@ abstract class RSAKeyPairGenerator extends KeyPairGeneratorSpi {
 
     @Override
     public void initialize(int keysize, SecureRandom random) {
+        System.out.println("in init with keysize: " + keysize);
         if (keysize <= 0) {
             throw new InvalidParameterException("keysize size cannot be <= 0");
         }
@@ -68,7 +69,7 @@ abstract class RSAKeyPairGenerator extends KeyPairGeneratorSpi {
     @Override
     public void initialize(AlgorithmParameterSpec params, SecureRandom random)
             throws InvalidAlgorithmParameterException {
-
+        System.out.println("in init with params: ");
         if (params instanceof RSAKeyGenParameterSpec == false) {
             throw new InvalidAlgorithmParameterException(
                     "Params must be instance of RSAKeyGenParameterSpec");
@@ -118,8 +119,9 @@ abstract class RSAKeyPairGenerator extends KeyPairGeneratorSpi {
         try {
             RSAKey rsaKey = RSAKey.generateKeyPair(provider.getOCKContext(), this.keysize,
                     this.publicExponent, provider);
-            java.security.interfaces.RSAPrivateKey privKey = new RSAPrivateCrtKey(rsaId, provider, rsaKey);
-            java.security.interfaces.RSAPublicKey pubKey = new RSAPublicKey(rsaId, provider, rsaKey);
+            System.out.println("in openjceplus generate keypair");
+            java.security.interfaces.RSAPrivateKey privKey = new RSAPrivateCrtKey(provider, rsaKey);
+            java.security.interfaces.RSAPublicKey pubKey = new RSAPublicKey(provider, rsaKey);
             return new KeyPair(pubKey, privKey);
         } catch (Exception e) {
             throw provider.providerException("Failure in generateKeyPair", e);
