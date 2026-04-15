@@ -1148,6 +1148,10 @@ public final class OpenJCEPlus extends OpenJCEPlusProvider {
         putService(new OpenJCEPlusService(jce, "Signature", "SHA3-512withECDSA",
                 "com.ibm.crypto.plus.provider.ECDSASignature$SHA3_512withECDSA", aliases));
 
+        aliases = null;
+        putService(new OpenJCEPlusService(jce, "Signature", "MD5withRSA",
+                "com.ibm.crypto.plus.provider.RSASignature$MD5withRSA", aliases));
+
         aliases = new String[] {"OID.1.2.840.113549.1.1.5", "1.2.840.113549.1.1.5",
                 "OID.1.3.14.3.2.29", "1.3.14.3.2.29", "OID.1.3.14.3.2.26", "1.3.14.3.2.26",
                 "SHA-1withRSA", "SHAwithRSA", "SHA-1/RSA", "SHA1/RSA", "SHA/RSA", "RSA"};

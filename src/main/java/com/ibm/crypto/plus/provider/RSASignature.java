@@ -228,6 +228,12 @@ abstract class RSASignature extends SignatureSpi {
         return null;
     }
 
+    public static final class MD5withRSA extends RSASignature {
+        public MD5withRSA(OpenJCEPlusProvider provider) {
+            super(provider, "MD5"); // OCK digest name
+        }
+    }
+
     public static final class SHA1withRSA extends RSASignature {
         public SHA1withRSA(OpenJCEPlusProvider provider) {
             super(provider, "SHA1"); // OCK digest name
