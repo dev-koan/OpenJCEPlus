@@ -83,6 +83,7 @@ import org.junit.platform.suite.api.Suite;
     TestPBECipherInterop.class,
     TestPBKDF2.class,
     TestPBKDF2Interop.class,
+    TestPBMAC1.class,
     TestPQCKEM.class,
     TestPQCKeyInteropBC.class,
     TestPQCKeyInteropOracle.class,
