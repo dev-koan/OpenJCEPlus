@@ -27,83 +27,36 @@ package com.ibm.crypto.plus.provider;
 
 import java.util.Arrays;
 
-import javax.crypto.MacSpi;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.PBEParameterSpec;
 
-import java.nio.ByteBuffer;
 import java.security.*;
 import java.security.spec.*;
-import java.security.MessageDigest;
 
 /**
  * This is an implementation of the PBMAC1 algorithms as defined
  * in PKCS#5 v2.1 standard.
  */
-public class PBMAC1Core extends MacSpi {
+abstract class PBMAC1Core extends HmacCore {
     // NOTE: this class inherits the Cloneable interface from HmacCore
     // Need to override clone() if mutable fields are added.
     private final String kdfAlgo;
     private final String hashAlgo;
     private final int blockLength; // in octets
     private final OpenJCEPlusProvider provider;
-
-    private MessageDigest md;
-    private byte[] k_ipad; // inner padding - key XORd with ipad
-    private byte[] k_opad; // outer padding - key XORd with opad
-    private boolean first;       // Is this the first data to be processed?
-
-    private final int blockLen;
+      // Is this the first data to be processed?
     /**
      * Creates an instance of PBMAC1 according to the selected
      * password-based key derivation function.
      */
-    PBMAC1Core(String kdfAlgo, String hashAlgo, int blockLength, OpenJCEPlusProvider provider)
-        throws NoSuchAlgorithmException {
+    PBMAC1Core(String kdfAlgo, String hashAlgo, int blockLength, OpenJCEPlusProvider provider) {
         this.kdfAlgo = kdfAlgo;
         this.hashAlgo = hashAlgo;
         this.blockLength = blockLength;
         this.provider = provider;
-
-        MessageDigest md = MessageDigest.getInstance(hashAlgo);
-                if (!(md instanceof Cloneable)) {
-            // use SUN provider if the most preferred one does not support
-            // cloning
-            Provider sun = Security.getProvider("SUN");
-            if (sun != null) {
-                md = MessageDigest.getInstance(hashAlgo, sun);
-            } else {
-                String noCloneProv = md.getProvider().getName();
-                // if no Sun provider, use provider list
-                md = null;
-                Provider[] provs = Security.getProviders();
-                for (Provider p : provs) {
-                    try {
-                        if (!p.getName().equals(noCloneProv)) {
-                            MessageDigest md2 =
-                                MessageDigest.getInstance(hashAlgo, p);
-                            if (md2 instanceof Cloneable) {
-                                md = md2;
-                                break;
-                            }
-                        }
-                    } catch (NoSuchAlgorithmException ignored) {
-                    }
-                }
-                if (md == null) {
-                    throw new NoSuchAlgorithmException
-                            ("No Cloneable digest found for " + hashAlgo);
-                }
-            }
-        }
-        this.md = md;
-        this.blockLen = blockLength;
-        this.k_ipad = new byte[blockLen];
-        this.k_opad = new byte[blockLen];
-        first = true;
-
+        super(provider, hashAlgo, blockLength);
     }
 
     private PBKDF2Core getKDFImpl(String algo) {
@@ -234,37 +187,7 @@ public class PBMAC1Core extends MacSpi {
             s = (PBKDF2KeyImpl) kdf.engineGenerateSecret(pbeSpec);
             derivedKey = s.getEncoded();
             cipherKey = new SecretKeySpec(derivedKey, kdfAlgo);
-            
-            if (!(key instanceof SecretKey)) {
-                throw new InvalidKeyException("Secret key expected");
-            }
-
-            byte[] secret = key.getEncoded();
-            if (secret == null) {
-                throw new InvalidKeyException("Missing key data");
-            }
-
-            // if key is longer than the block length, reset it using
-            // the message digest object.
-            if (secret.length > blockLen) {
-                byte[] tmp = md.digest(secret);
-                // now erase the secret
-                Arrays.fill(secret, (byte)0);
-                secret = tmp;
-            }
-
-            // XOR k with ipad and opad, respectively
-            for (int i = 0; i < blockLen; i++) {
-                int si = (i < secret.length) ? secret[i] : 0;
-                k_ipad[i] = (byte)(si ^ 0x36);
-                k_opad[i] = (byte)(si ^ 0x5c);
-            }
-
-            // now erase the secret
-            Arrays.fill(secret, (byte)0);
-            secret = null;
-
-            engineReset();
+            super.engineInit(cipherKey, null);
         } catch (InvalidKeySpecException ikse) {
             throw new InvalidKeyException("Cannot construct PBE key", ikse);
         } finally {
@@ -280,95 +203,6 @@ public class PBMAC1Core extends MacSpi {
             }
             pbeSpec.clearPassword();
         }
-    }
-
-        protected void engineUpdate(byte input) {
-        if (first) {
-            // compute digest for 1st pass; start with inner pad
-            md.update(k_ipad);
-            first = false;
-        }
-
-        // add the passed byte to the inner digest
-        md.update(input);
-    }
-
-    protected void engineReset() {
-        if (!first) {
-            md.reset();
-            first = true;
-        }
-    }
-
-    /**
-     * Processes the first <code>len</code> bytes in <code>input</code>,
-     * starting at <code>offset</code>.
-     *
-     * @param input the input buffer.
-     * @param offset the offset in <code>input</code> where the input starts.
-     * @param len the number of bytes to process.
-     */
-    protected void engineUpdate(byte[] input, int offset, int len) {
-        if (first) {
-            // compute digest for 1st pass; start with inner pad
-            md.update(k_ipad);
-            first = false;
-        }
-
-        // add the selected part of an array of bytes to the inner digest
-        md.update(input, offset, len);
-    }
-
-    /**
-     * Processes the <code>input.remaining()</code> bytes in the ByteBuffer
-     * <code>input</code>.
-     *
-     * @param input the input byte buffer.
-     */
-    protected void engineUpdate(ByteBuffer input) {
-        if (first) {
-            // compute digest for 1st pass; start with inner pad
-            md.update(k_ipad);
-            first = false;
-        }
-
-        md.update(input);
-    }
-
-    /**
-     * Completes the HMAC computation and resets the HMAC for further use,
-     * maintaining the secret key that the HMAC was initialized with.
-     *
-     * @return the HMAC result.
-     */
-    protected byte[] engineDoFinal() {
-        if (first) {
-            // compute digest for 1st pass; start with inner pad
-            md.update(k_ipad);
-        } else {
-            first = true;
-        }
-
-        try {
-            // finish the inner digest
-            byte[] tmp = md.digest();
-
-            // compute digest for 2nd pass; start with outer pad
-            md.update(k_opad);
-            // add result of 1st hash
-            md.update(tmp);
-
-            md.digest(tmp, 0, tmp.length);
-            md.reset();
-            return tmp;
-        } catch (DigestException e) {
-            // should never occur
-            throw new ProviderException(e);
-        }
-    }
-
-    protected int engineGetMacLength() {
-        return this.md.getDigestLength();
     }
 
     public static final class HmacSHA1 extends PBMAC1Core {

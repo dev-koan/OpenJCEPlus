@@ -763,6 +763,34 @@ public final class OpenJCEPlus extends OpenJCEPlusProvider {
         putService(new OpenJCEPlusService(jce, "MAC", "HmacSHA3-512",
                 "com.ibm.crypto.plus.provider.HmacCore$HmacSHA3_512", aliases));
 
+        aliases = null;
+        putService(new OpenJCEPlusService(jce, "MAC", "PBEWithHmacSHA1",
+                "com.ibm.crypto.plus.provider.PBMAC1Core$HmacSHA1", aliases));
+        
+        aliases = null;
+        putService(new OpenJCEPlusService(jce, "MAC", "PBEWithHmacSHA224",
+                "com.ibm.crypto.plus.provider.PBMAC1Core$HmacSHA224", aliases));
+        
+        aliases = null;
+        putService(new OpenJCEPlusService(jce, "MAC", "PBEWithHmacSHA256",
+                "com.ibm.crypto.plus.provider.PBMAC1Core$HmacSHA256", aliases));
+        
+        aliases = null;
+        putService(new OpenJCEPlusService(jce, "MAC", "PBEWithHmacSHA384",
+                "com.ibm.crypto.plus.provider.PBMAC1Core$HmacSHA384", aliases));
+        
+        aliases = null;
+        putService(new OpenJCEPlusService(jce, "MAC", "PBEWithHmacSHA512",
+                "com.ibm.crypto.plus.provider.PBMAC1Core$HmacSHA512", aliases));
+        
+        aliases = null;
+        putService(new OpenJCEPlusService(jce, "MAC", "PBEWithHmacSHA512/224",
+                "com.ibm.crypto.plus.provider.PBMAC1Core$HmacSHA512_224", aliases));
+        
+        aliases = null;
+        putService(new OpenJCEPlusService(jce, "MAC", "PBEWithHmacSHA512/256",
+                "com.ibm.crypto.plus.provider.PBMAC1Core$HmacSHA512_256", aliases));        
+
         if (allowLegacyHKDF) {
             /* =======================================================================
              * HKDF Algorithms use KeyGeneratorSpi - Legacy way of using
