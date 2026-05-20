@@ -40,6 +40,7 @@ public final class OpenJCEPlusFIPS extends OpenJCEPlusProvider {
             + "Message authentication code (MAC)  :   HmacSHA224, HmacSHA256,\n"
             + "                                       HmacSHA384, HmacSHA512\n"
             + "                                                   HmacSHA3-224, HmacSHA3-256, HmacSHA3-384, HmacSHA3-512\n"
+            + "                                      PBEWithHmacSHA384, PBEWithHmacSHA512, PBEWithHmacSHA512/224, PBEWithHmacSHA512/256\n"
             + "Message digest                     : SHA-224, SHA-256, SHA-384, SHA-512, SHA-512/224, SHA-512/256, SHA3-224, SHA3-256, SHA3-384, SHA3-512\n"
             + "Secret key factory                 : AES, PBKDF2WithHmacSHA224, PBKDF2WithHmacSHA256, PBKDF2WithHmacSHA384, PBKDF2WithHmacSHA512\n"
             + "Secure random                      : HASHDRBG, SHA256DRBG, SHA512DRBG\n"
@@ -469,6 +470,34 @@ public final class OpenJCEPlusFIPS extends OpenJCEPlusProvider {
                 "HMACwithSHA3-512", "HmacSHA3-512"};
         putService(new OpenJCEPlusService(jce, "MAC", "HmacSHA3-512",
                 "com.ibm.crypto.plus.provider.HmacCore$HmacSHA3_512", aliases));
+
+        aliases = null;
+        putService(new OpenJCEPlusService(jce, "MAC", "PBEWithHmacSHA1",
+                "com.ibm.crypto.plus.provider.PBMAC1Core$HmacSHA1", aliases));
+        
+        aliases = null;
+        putService(new OpenJCEPlusService(jce, "MAC", "PBEWithHmacSHA224",
+                "com.ibm.crypto.plus.provider.PBMAC1Core$HmacSHA224", aliases));
+        
+        aliases = null;
+        putService(new OpenJCEPlusService(jce, "MAC", "PBEWithHmacSHA256",
+                "com.ibm.crypto.plus.provider.PBMAC1Core$HmacSHA256", aliases));
+        
+        aliases = null;
+        putService(new OpenJCEPlusService(jce, "MAC", "PBEWithHmacSHA384",
+                "com.ibm.crypto.plus.provider.PBMAC1Core$HmacSHA384", aliases));
+        
+        aliases = null;
+        putService(new OpenJCEPlusService(jce, "MAC", "PBEWithHmacSHA512",
+                "com.ibm.crypto.plus.provider.PBMAC1Core$HmacSHA512", aliases));
+        
+        aliases = null;
+        putService(new OpenJCEPlusService(jce, "MAC", "PBEWithHmacSHA512/224",
+                "com.ibm.crypto.plus.provider.PBMAC1Core$HmacSHA512_224", aliases));
+        
+        aliases = null;
+        putService(new OpenJCEPlusService(jce, "MAC", "PBEWithHmacSHA512/256",
+                "com.ibm.crypto.plus.provider.PBMAC1Core$HmacSHA512_256", aliases)); 
 
         if (allowLegacyHKDF) {
             /* =======================================================================

@@ -6,7 +6,7 @@
  * this code, including the "Classpath" Exception described therein.
  */
 
-package ibm.jceplus.junit.openjceplus;
+package ibm.jceplus.junit.openjceplusfips;
 
 import ibm.jceplus.junit.base.BaseTestPBMAC1;
 import org.junit.jupiter.api.BeforeAll;
@@ -15,10 +15,11 @@ import org.junit.jupiter.api.TestInstance.Lifecycle;
 
 @TestInstance(Lifecycle.PER_CLASS)
 public class TestPBMAC1 extends BaseTestPBMAC1 {
-    
+
     @BeforeAll
     public void beforeAll() {
         Utils.loadProviderTestSuite();
         setProviderName(Utils.TEST_SUITE_PROVIDER_NAME);
     }
+
 }

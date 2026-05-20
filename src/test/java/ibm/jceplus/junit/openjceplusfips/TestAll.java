@@ -57,6 +57,7 @@ import org.junit.platform.suite.api.Suite;
     TestKeySerialization.class,
     TestPBKDF2.class,
     TestPBKDF2Interop.class,
+    TestPBMAC1.class,
     TestPublicMethodsToMakeNonPublic.class,
     TestResetByteBuffer.class,
     TestRSACipherInterop.class,

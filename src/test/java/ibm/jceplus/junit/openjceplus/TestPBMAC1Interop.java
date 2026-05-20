@@ -8,17 +8,19 @@
 
 package ibm.jceplus.junit.openjceplus;
 
-import ibm.jceplus.junit.base.BaseTestPBMAC1;
+import ibm.jceplus.junit.base.BaseTestPBMAC1Interop;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 
 @TestInstance(Lifecycle.PER_CLASS)
-public class TestPBMAC1 extends BaseTestPBMAC1 {
-    
+public class TestPBMAC1Interop extends BaseTestPBMAC1Interop {
+
     @BeforeAll
     public void beforeAll() {
         Utils.loadProviderTestSuite();
         setProviderName(Utils.TEST_SUITE_PROVIDER_NAME);
+        setInteropProviderName(Utils.PROVIDER_SunJCE);
     }
+
 }

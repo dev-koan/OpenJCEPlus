@@ -1,128 +1,97 @@
 /*
- * Copyright (c) 2003, 2024, Oracle and/or its affiliates. All rights reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ * Copyright IBM Corp. 2026
  *
  * This code is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
- *
- * This code is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * version 2 for more details (a copy is included in the LICENSE file that
- * accompanied this code).
- *
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
+ * under the terms provided by IBM in the LICENSE file that accompanied
+ * this code, including the "Classpath" Exception described therein.
  */
 
 package com.ibm.crypto.plus.provider;
 
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.Key;
+import java.security.NoSuchAlgorithmException;
+import java.security.ProviderException;
+import java.security.spec.AlgorithmParameterSpec;
+import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
-
 import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.PBEParameterSpec;
-
-import java.security.*;
-import java.security.spec.*;
+import javax.crypto.spec.SecretKeySpec;
 
 /**
  * This is an implementation of the PBMAC1 algorithms as defined
  * in PKCS#5 v2.1 standard.
  */
 abstract class PBMAC1Core extends HmacCore {
-    // NOTE: this class inherits the Cloneable interface from HmacCore
-    // Need to override clone() if mutable fields are added.
+
     private final String kdfAlgo;
-    private final String hashAlgo;
-    private final int blockLength; // in octets
+    private final int blockLength;
     private final OpenJCEPlusProvider provider;
-      // Is this the first data to be processed?
-    /**
-     * Creates an instance of PBMAC1 according to the selected
-     * password-based key derivation function.
-     */
+    
     PBMAC1Core(String kdfAlgo, String hashAlgo, int blockLength, OpenJCEPlusProvider provider) {
+        super(provider, hashAlgo, blockLength);
         this.kdfAlgo = kdfAlgo;
-        this.hashAlgo = hashAlgo;
         this.blockLength = blockLength;
         this.provider = provider;
-        super(provider, hashAlgo, blockLength);
     }
 
     private PBKDF2Core getKDFImpl(String algo) {
         PBKDF2Core kdf;
-        switch(algo) {
-        case "HmacSHA1":
+        switch (algo) {
+            case "HmacSHA1":
                 kdf = new PBKDF2Core.HmacSHA1(provider);
                 break;
-        case "HmacSHA224":
+            case "HmacSHA224":
                 kdf = new PBKDF2Core.HmacSHA224(provider);
                 break;
-        case "HmacSHA256":
+            case "HmacSHA256":
                 kdf = new PBKDF2Core.HmacSHA256(provider);
                 break;
-        case "HmacSHA384":
+            case "HmacSHA384":
                 kdf = new PBKDF2Core.HmacSHA384(provider);
                 break;
-        case "HmacSHA512":
+            case "HmacSHA512":
                 kdf = new PBKDF2Core.HmacSHA512(provider);
                 break;
-        case "HmacSHA512/224":
+            case "HmacSHA512-224":
                 kdf = new PBKDF2Core.HmacSHA512_224(provider);
                 break;
-        case "HmacSHA512/256":
+            case "HmacSHA512-256":
                 kdf = new PBKDF2Core.HmacSHA512_256(provider);
                 break;
-        default:
-                throw new ProviderException(
-                    "No MAC implementation for " + algo);
+            default:
+                throw new ProviderException("No MAC implementation for " + algo);
         }
+
         return kdf;
     }
 
-    /**
-     * Initializes the HMAC with the given secret key and algorithm parameters.
-     *
-     * @param key the secret key.
-     * @param params the algorithm parameters.
-     *
-     * @exception InvalidKeyException if the given key is inappropriate for
-     * initializing this MAC.
-     * @exception InvalidAlgorithmParameterException if the given algorithm
-     * parameters are inappropriate for this MAC.
-     */
     protected void engineInit(Key key, AlgorithmParameterSpec params)
         throws InvalidKeyException, InvalidAlgorithmParameterException {
-        char[] passwdChars;
-        byte[] salt = null;
-        int iCount = 0;
-        if (key instanceof javax.crypto.interfaces.PBEKey) {
-            javax.crypto.interfaces.PBEKey pbeKey =
-                (javax.crypto.interfaces.PBEKey) key;
-            passwdChars = pbeKey.getPassword();
-            salt = pbeKey.getSalt(); // maybe null if unspecified
-            iCount = pbeKey.getIterationCount(); // maybe 0 if unspecified
+        char[] password;
+        byte[] keySalt = null;
+        int keyIterationCount = 0;
+
+        if (key instanceof javax.crypto.interfaces.PBEKey pbeKey) {
+            password = pbeKey.getPassword();
+            keySalt = pbeKey.getSalt();
+            keyIterationCount = pbeKey.getIterationCount();
         } else if (key instanceof SecretKey) {
-            byte[] passwdBytes;
+            byte[] passwordBytes;
             if (!(key.getAlgorithm().regionMatches(true, 0, "PBE", 0, 3)) ||
-                    (passwdBytes = key.getEncoded()) == null) {
+                    (passwordBytes = key.getEncoded()) == null) {
                 throw new InvalidKeyException("Missing password");
             }
-            passwdChars = new char[passwdBytes.length];
-            for (int i=0; i<passwdChars.length; i++) {
-                passwdChars[i] = (char) (passwdBytes[i] & 0x7f);
+
+            password = new char[passwordBytes.length];
+            for (int i = 0; i < password.length; i++) {
+                password[i] = (char) (passwordBytes[i] & 0x7f);
             }
-            Arrays.fill(passwdBytes, (byte)0x00);
+
+            Arrays.fill(passwordBytes, (byte) 0x00);
         } else {
             throw new InvalidKeyException("SecretKey of PBE type required");
         }
@@ -130,53 +99,40 @@ abstract class PBMAC1Core extends HmacCore {
         PBEKeySpec pbeSpec;
         try {
             if (params == null) {
-                // should not auto-generate default values since current
-                // javax.crypto.Mac api does not have any method for caller to
-                // retrieve the generated defaults.
-                if ((salt == null) || (iCount == 0)) {
-                    throw new InvalidAlgorithmParameterException
-                            ("PBEParameterSpec required for salt and iteration count");
+                if ((keySalt == null) || (keyIterationCount == 0)) {
+                    throw new InvalidAlgorithmParameterException("PBEParameterSpec required for salt and iteration count");
                 }
             } else if (!(params instanceof PBEParameterSpec)) {
-                throw new InvalidAlgorithmParameterException
-                        ("PBEParameterSpec type required");
+                throw new InvalidAlgorithmParameterException("PBEParameterSpec type required");
             } else {
                 PBEParameterSpec pbeParams = (PBEParameterSpec) params;
-                // make sure the parameter values are consistent
-                if (salt != null) {
-                    if (!Arrays.equals(salt, pbeParams.getSalt())) {
-                        throw new InvalidAlgorithmParameterException
-                                ("Inconsistent value of salt between key and params");
+
+                if (keySalt != null) {
+                    if (!Arrays.equals(keySalt, pbeParams.getSalt())) {
+                        throw new InvalidAlgorithmParameterException("Inconsistent value of salt between key and params");
                     }
                 } else {
-                    salt = pbeParams.getSalt();
+                    keySalt = pbeParams.getSalt();
                 }
-                if (iCount != 0) {
-                    if (iCount != pbeParams.getIterationCount()) {
-                        throw new InvalidAlgorithmParameterException
-                                ("Different iteration count between key and params");
+                if (keyIterationCount != 0) {
+                    if (keyIterationCount != pbeParams.getIterationCount()) {
+                        throw new InvalidAlgorithmParameterException("Different iteration count between key and params");
                     }
                 } else {
-                    iCount = pbeParams.getIterationCount();
+                    keyIterationCount = pbeParams.getIterationCount();
                 }
-            }
-            // For security purpose, we need to enforce a minimum length
-            // for salt; just require the minimum salt length to be 8-byte
-            // which is what PKCS#5 recommends and openssl does.
-            if (salt.length < 8) {
-                throw new InvalidAlgorithmParameterException
-                        ("Salt must be at least 8 bytes long");
-            }
-            if (iCount <= 0) {
-                throw new InvalidAlgorithmParameterException
-                        ("IterationCount must be a positive number");
             }
 
-            pbeSpec = new PBEKeySpec(passwdChars, salt, iCount, blockLength);
-            // password char[] was cloned in PBEKeySpec constructor,
-            // so we can zero it out here
+            if (keySalt.length < 8) {
+                throw new InvalidAlgorithmParameterException("Salt must be at least 8 bytes long");
+            }
+            if (keyIterationCount <= 0) {
+                throw new InvalidAlgorithmParameterException("IterationCount must be a positive number");
+            }
+
+            pbeSpec = new PBEKeySpec(password, keySalt, keyIterationCount, blockLength);
         } finally {
-            Arrays.fill(passwdChars, '\0');
+            Arrays.fill(password, '\0');
         }
 
         PBKDF2KeyImpl s = null;
@@ -191,15 +147,8 @@ abstract class PBMAC1Core extends HmacCore {
         } catch (InvalidKeySpecException ikse) {
             throw new InvalidKeyException("Cannot construct PBE key", ikse);
         } finally {
-            if (cipherKey != null) {
-                // SharedSecrets.getJavaxCryptoSpecAccess()
-                //         .clearSecretKeySpec(cipherKey);
-            }
             if (derivedKey != null) {
                 Arrays.fill(derivedKey, (byte) 0x00);
-            }
-            if (s != null) {
-                // s.clear();
             }
             pbeSpec.clearPassword();
         }
@@ -213,37 +162,37 @@ abstract class PBMAC1Core extends HmacCore {
 
     public static final class HmacSHA224 extends PBMAC1Core {
         public HmacSHA224(OpenJCEPlusProvider provider) throws NoSuchAlgorithmException {
-            super("HmacSHA224", "SHA-224", 64, provider);
+            super("HmacSHA224", "SHA224", 64, provider);
         }
     }
 
     public static final class HmacSHA256 extends PBMAC1Core {
         public HmacSHA256(OpenJCEPlusProvider provider) throws NoSuchAlgorithmException {
-            super("HmacSHA256", "SHA-256", 64, provider);
+            super("HmacSHA256", "SHA256", 64, provider);
         }
     }
 
     public static final class HmacSHA384 extends PBMAC1Core {
         public HmacSHA384(OpenJCEPlusProvider provider) throws NoSuchAlgorithmException {
-            super("HmacSHA384", "SHA-384", 128, provider);
+            super("HmacSHA384", "SHA384", 128, provider);
         }
     }
 
     public static final class HmacSHA512 extends PBMAC1Core {
         public HmacSHA512(OpenJCEPlusProvider provider) throws NoSuchAlgorithmException {
-            super("HmacSHA512", "SHA-512", 128, provider);
+            super("HmacSHA512", "SHA512", 128, provider);
         }
     }
 
     public static final class HmacSHA512_224 extends PBMAC1Core {
         public HmacSHA512_224(OpenJCEPlusProvider provider) throws NoSuchAlgorithmException {
-            super("HmacSHA512/224", "SHA-512/224", 128, provider);
+            super("HmacSHA512-224", "SHA512-224", 128, provider);
         }
     }
 
     public static final class HmacSHA512_256 extends PBMAC1Core {
         public HmacSHA512_256(OpenJCEPlusProvider provider) throws NoSuchAlgorithmException {
-            super("HmacSHA512/256", "SHA-512/256", 128, provider);
+            super("HmacSHA512-256", "SHA512-256", 128, provider);
         }
     }
 }
